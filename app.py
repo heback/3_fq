@@ -132,10 +132,13 @@ with tab2:
 
         # 페이지 설정
         pages = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-        page = st.selectbox('페이지', options=pages, index=0)
+        if 'page' not in st.session_state.keys():
+            st.session_state['page'] = 1
+
+        st.markdown(f"### {st.session_state['page']} 페이지")
 
         # 문항 불러오기
-        cur.execute(f"SELECT * FROM questions ORDER BY no ASC LIMIT 10 OFFSET {(page - 1)*10}")
+        cur.execute(f"SELECT * FROM questions ORDER BY no ASC LIMIT 10 OFFSET {(st.session_state['page'] - 1)*10}")
         rows = cur.fetchall()
         # print(rows)
 
@@ -157,6 +160,21 @@ with tab2:
             with col2:
                 st.checkbox('', key=row[0], value=res[row[0]-1][4], on_change=add_response,
                                 args=(res[row[0]-1][0], res[row[0]-1][4]))
+
+        col1, col2, col3 = st.columns([1, 6, 1])
+        with col1:
+            if st.session_state['page'] != 1:
+                prev = st.button('이전')
+                if prev:
+                    st.session_state['page'] -= 1
+                    st.experimental_rerun()
+
+        with col3:
+            if st.session_state['page'] != 15:
+                nex = st.button('다음')
+                if nex:
+                    st.session_state['page'] += 1
+                    st.experimental_rerun()
 
 with tab3:
     # print('결과 조회')
