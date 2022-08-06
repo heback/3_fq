@@ -70,202 +70,193 @@ def add_response(*args):
     con.commit()
 
 
-# 사이드바 메뉴
-menus = ['HOME', '3-FQ']
-menu = st.sidebar.selectbox('메뉴', options=menus)
+st.header('3-FQ 판별 프로그램 참여')
 
-if menu == 'HOME':
-    st.header('3-FQ 판별 프로그램')
-    st.info('프로그램 소개')
+tab1, tab2, tab3 = st.tabs(['참가자 등록', '참여', '결과 조회'])
 
-elif menu == '3-FQ':
-    st.header('3-FQ 판별 프로그램 참여')
+with tab1:
+    st.subheader('참가자 등록')
 
-    tab1, tab2, tab3 = st.tabs(['참가자 등록', '참여', '결과 조회'])
+    with st.form('users', clear_on_submit=True):
+        user_name = st.text_input('성명', max_chars=5)
+        user_pw = st.text_input('비밀번호', type='password', max_chars=4)
+        user_birth = st.date_input('생년월일', min_value=datetime.strptime('1930-01-01','%Y-%m-%d'),
+                                   max_value=datetime.strptime('2022-12-31','%Y-%m-%d'))
+        user_gender = st.radio('성별', options=['남', '여'], horizontal=True, index=0)
+        user_type = st.radio('구분', options=['중', '고', '성인'], horizontal=True, index=0)
+        submitted = st.form_submit_button('등록')
 
-    with tab1:
-        st.subheader('참가자 등록')
+        if submitted:
 
-        with st.form('users', clear_on_submit=True):
-            user_name = st.text_input('성명', max_chars=5)
-            user_pw = st.text_input('비밀번호', type='password', max_chars=4)
-            user_birth = st.date_input('생년월일', min_value=datetime.strptime('1930-01-01','%Y-%m-%d'),
-                                       max_value=datetime.strptime('2022-12-31','%Y-%m-%d'))
-            user_gender = st.radio('성별', options=['남', '여'], horizontal=True, index=0)
-            user_type = st.radio('구분', options=['중', '고', '성인'], horizontal=True, index=0)
-            submitted = st.form_submit_button('등록')
+            # name 확인
+            if len(user_name) < 2:
+                st.warning('성명이 적절한지 확인하세요.')
+                st.stop()
 
-            if submitted:
+            if not re.match(hangul, user_name):
+                st.warning('성명은 한글만 입력합니다.')
+                st.stop()
 
-                # name 확인
-                if len(user_name) < 2:
-                    st.warning('성명이 적절한지 확인하세요.')
-                    st.stop()
+            user_id = save_user(user_name=user_name,
+                                user_pw=user_pw,
+                                user_birth=user_birth,
+                                user_gender=user_gender,
+                                user_type=user_type)
+            st.session_state['user_id'] = user_id
+            st.info(f'사용자 정보를 저장하였습니다. 참여 아이디는 {user_id} 입니다. 결과 확인을 위해 필요하기 때문에 꼭 기억하셔야 합니다. 참여 탭을 클릭하여 시작하세요.')
 
-                if not re.match(hangul, user_name):
-                    st.warning('성명은 한글만 입력합니다.')
-                    st.stop()
+with tab2:
+    st.subheader('참여')
 
-                user_id = save_user(user_name=user_name,
-                                    user_pw=user_pw,
-                                    user_birth=user_birth,
-                                    user_gender=user_gender,
-                                    user_type=user_type)
-                st.session_state['user_id'] = user_id
-                st.info(f'사용자 정보를 저장하였습니다. 참여 아이디는 {user_id} 입니다. 결과 확인을 위해 필요하기 때문에 꼭 기억하셔야 합니다. 참여 탭을 클릭하여 시작하세요.')
+    if 'user_id' not in st.session_state.keys():
+        st.warning('참가자 등록을 먼저 하여야 합니다.')
 
-    with tab2:
-        st.subheader('참여')
+    else:
 
-        if 'user_id' not in st.session_state.keys():
-            st.warning('참가자 등록을 먼저 하여야 합니다.')
+        user_info(st.session_state['user_id'])
 
-        else:
+        # 응답 초기화(최초 한 번만 적용됨)
+        response_initialize(st.session_state['user_id'])
 
-            user_info(st.session_state['user_id'])
+        # 응답 정보 불러오기
+        cur.execute(f"SELECT * FROM responses WHERE user_id='{st.session_state['user_id']}'")
+        res = cur.fetchall()
+        # print(res)
+        # res[0][0] : id
+        # res[0][1] : user_id
+        # res[0][2] : question_no
+        # res[0][3] : question_category
+        # res[0][4] : response
 
-            # 응답 초기화(최초 한 번만 적용됨)
-            response_initialize(st.session_state['user_id'])
+        st.info('모든 페이지(1~15 페이지)의 문항(150문항)에 대해 자신에게 해당하는 것을 선택(체크)하세요.')
 
-            # 응답 정보 불러오기
-            cur.execute(f"SELECT * FROM responses WHERE user_id='{st.session_state['user_id']}'")
-            res = cur.fetchall()
-            # print(res)
-            # res[0][0] : id
-            # res[0][1] : user_id
-            # res[0][2] : question_no
-            # res[0][3] : question_category
-            # res[0][4] : response
+        # 페이지 설정
+        pages = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+        page = st.selectbox('페이지', options=pages, index=0)
 
-            st.info('모든 페이지(1~15 페이지)의 문항(150문항)에 대해 자신에게 해당하는 것을 선택(체크)하세요.')
+        # 문항 불러오기
+        cur.execute(f"SELECT * FROM questions ORDER BY no ASC LIMIT 10 OFFSET {(page - 1)*10}")
+        rows = cur.fetchall()
+        # print(rows)
 
-            # 페이지 설정
-            pages = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-            page = st.selectbox('페이지', options=pages, index=0)
+        # 헤더
+        col1, col2 = st.columns([8, 1])
+        with col1:
+            st.write('문항')
+        with col2:
+            st.write('예')
 
-            # 문항 불러오기
-            cur.execute(f"SELECT * FROM questions ORDER BY no ASC LIMIT 10 OFFSET {(page - 1)*10}")
-            rows = cur.fetchall()
-            # print(rows)
+        # 문항 출력
+        for row in rows:
 
-            # 헤더
             col1, col2 = st.columns([8, 1])
             with col1:
-                st.write('문항')
+                st.write(row[3])
+                # st.write(row[0])
+                # st.write(res[row[0]-1][0])
             with col2:
-                st.write('예')
+                st.checkbox('', key=row[0], value=res[row[0]-1][4], on_change=add_response,
+                                args=(res[row[0]-1][0], res[row[0]-1][4]))
 
-            # 문항 출력
-            for row in rows:
+with tab3:
+    # print('결과 조회')
+    st.subheader('결과 조회')
 
-                col1, col2 = st.columns([8, 1])
-                with col1:
-                    st.write(row[3])
-                    # st.write(row[0])
-                    # st.write(res[row[0]-1][0])
-                with col2:
-                    st.checkbox('', key=row[0], value=res[row[0]-1][4], on_change=add_response,
-                                    args=(res[row[0]-1][0], res[row[0]-1][4]))
+    if 'user_id' not in st.session_state.keys():
+        st.info('참여 완료한 후 혹은 로그인 후 결과를 조회하세요.')
 
-    with tab3:
-        # print('결과 조회')
-        st.subheader('결과 조회')
-
-        if 'user_id' not in st.session_state.keys():
-            st.info('참여 완료한 후 혹은 로그인 후 결과를 조회하세요.')
-
-            with st.form('login', clear_on_submit=True):
-                col1, col2, col3, col4 = st.columns([2, 3, 3, 2])
-                with col1:
-                    user_id = st.text_input('아이디')
-                with col2:
-                    user_name = st.text_input('성명')
-                with col3:
-                    user_pw = st.text_input('비밀번호', type='password')
-                with col4:
-                    sumit_btn = st.form_submit_button('로그인')
+        with st.form('login', clear_on_submit=True):
+            col1, col2, col3, col4 = st.columns([2, 3, 3, 2])
+            with col1:
+                user_id = st.text_input('아이디')
+            with col2:
+                user_name = st.text_input('성명')
+            with col3:
+                user_pw = st.text_input('비밀번호', type='password')
+            with col4:
+                sumit_btn = st.form_submit_button('로그인')
 
 
-                    if sumit_btn:
-                        if len(user_id) < 1:
-                            st.warning('아이디를 확인하세요.')
-                            st.stop()
+                if sumit_btn:
+                    if len(user_id) < 1:
+                        st.warning('아이디를 확인하세요.')
+                        st.stop()
 
-                        if len(user_name) < 2:
-                            st.warning('성명을 확인하세요.')
-                            st.stop()
+                    if len(user_name) < 2:
+                        st.warning('성명을 확인하세요.')
+                        st.stop()
 
-                        if len(user_pw) < 4:
-                            st.warning('비밀번호를 확인하세요.')
-                            st.stop()
+                    if len(user_pw) < 4:
+                        st.warning('비밀번호를 확인하세요.')
+                        st.stop()
 
-                        # 아이디 확인
-                        if not user_check(user_id):
-                            st.warning('존재하지 않는 아이디입니다.')
-                            st.stop()
+                    # 아이디 확인
+                    if not user_check(user_id):
+                        st.warning('존재하지 않는 아이디입니다.')
+                        st.stop()
 
-                        row = user_login(user_id)
-                        if user_name != row[1]:
-                            st.warning('성명이 일치하지 않습니다.')
-                            st.stop()
-                        if user_pw != row[2]:
-                            st.warning('비밀번호가 일치하지 않습니다.')
-                            st.stop()
+                    row = user_login(user_id)
+                    if user_name != row[1]:
+                        st.warning('성명이 일치하지 않습니다.')
+                        st.stop()
+                    if user_pw != row[2]:
+                        st.warning('비밀번호가 일치하지 않습니다.')
+                        st.stop()
 
-                        st.session_state['user_id'] = user_id
-                        st.experimental_rerun()
+                    st.session_state['user_id'] = user_id
+                    st.experimental_rerun()
 
-        if 'user_id' in st.session_state.keys():
+    if 'user_id' in st.session_state.keys():
 
-            # 전체 평균(구분별)
-            sql1 = f"SELECT question_category, avg(response) FROM responses GROUP BY question_category"
-            cur.execute(sql1)
-            res1 = cur.fetchall()
-            # print(res1)
+        # 전체 평균(구분별)
+        sql1 = f"SELECT question_category, avg(response) FROM responses GROUP BY question_category"
+        cur.execute(sql1)
+        res1 = cur.fetchall()
+        # print(res1)
 
-            # 사용자 평균(구분별)
-            sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
-            cur.execute(sql2)
-            res2 = cur.fetchall()
-            # print(res2)
+        # 사용자 평균(구분별)
+        sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
+        cur.execute(sql2)
+        res2 = cur.fetchall()
+        # print(res2)
 
-            categories = ['Familyship', 'Friendship', 'Fellowship']
-            index = ['평균', '본인']
-            data = [[100.0, 100.0, 100.0],
-                    [np.around(res2[0][1]*100/res1[0][1], 1),
-                     np.around(res2[1][1]*100/res1[1][1], 1),
-                     np.around(res2[2][1]*100/res1[2][1], 1)]]
-            df = pd.DataFrame(data, index=index, columns=categories)
+        categories = ['Familyship', 'Friendship', 'Fellowship']
+        index = ['평균', '본인']
+        data = [[100.0, 100.0, 100.0],
+                [np.around(res2[0][1]*100/res1[0][1], 1),
+                 np.around(res2[1][1]*100/res1[1][1], 1),
+                 np.around(res2[2][1]*100/res1[2][1], 1)]]
+        df = pd.DataFrame(data, index=index, columns=categories)
 
-            st.dataframe(df.style.format(subset=categories, formatter="{:.1f}"))
+        st.dataframe(df.style.format(subset=categories, formatter="{:.1f}"))
 
-            fig = go.Figure()
+        fig = go.Figure()
 
-            fig.add_trace(go.Scatterpolar(
-                r=data[0],
-                theta=categories,
-                fill='toself',
-                name='평균'
-            ))
-            fig.add_trace(go.Scatterpolar(
-                r=data[1],
-                theta=categories,
-                fill='toself',
-                name='본인'
-            ))
+        fig.add_trace(go.Scatterpolar(
+            r=data[0],
+            theta=categories,
+            fill='toself',
+            name='평균'
+        ))
+        fig.add_trace(go.Scatterpolar(
+            r=data[1],
+            theta=categories,
+            fill='toself',
+            name='본인'
+        ))
 
-            fig.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 200]
-                    )),
-                showlegend=True
-            )
-            st.subheader('친화성 다이어그램')
-            st.write(fig)
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 200]
+                )),
+            showlegend=True
+        )
+        st.subheader('친화성 다이어그램')
+        st.write(fig)
 
-            logout_btn = st.button('로그아웃')
-            if logout_btn:
-                del st.session_state['user_id']
-                st.experimental_rerun()
+        logout_btn = st.button('로그아웃')
+        if logout_btn:
+            del st.session_state['user_id']
+            st.experimental_rerun()
