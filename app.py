@@ -6,7 +6,7 @@ import sqlite3
 import re
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
+from plotly import graph_objs as go
 
 # 한글 정규표현식 패턴
 hangul = '^[가-힣]{2,5}$'
