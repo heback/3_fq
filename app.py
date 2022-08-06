@@ -168,7 +168,7 @@ elif menu == '3-FQ':
                                     args=(res[row[0]-1][0], res[row[0]-1][4]))
 
     with tab3:
-        print('결과 조회')
+        # print('결과 조회')
         st.subheader('결과 조회')
 
         if 'user_id' not in st.session_state.keys():
@@ -221,13 +221,13 @@ elif menu == '3-FQ':
             sql1 = f"SELECT question_category, avg(response) FROM responses GROUP BY question_category"
             cur.execute(sql1)
             res1 = cur.fetchall()
-            print(res1)
+            # print(res1)
 
             # 사용자 평균(구분별)
             sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
             cur.execute(sql2)
             res2 = cur.fetchall()
-            print(res2)
+            # print(res2)
 
             categories = ['Familyship', 'Friendship', 'Fellowship']
             index = ['평균', '본인']
