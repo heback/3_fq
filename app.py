@@ -187,7 +187,7 @@ with tab3:
         with st.form('login', clear_on_submit=True):
             col1, col2, col3, col4 = st.columns([2, 3, 3, 2])
             with col1:
-                user_id = st.text_input('아이디')
+                user_id = st.text_input('아이디(숫자)')
             with col2:
                 user_name = st.text_input('성명')
             with col3:
