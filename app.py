@@ -70,6 +70,19 @@ def add_response(*args):
     con.commit()
 
 
+# 문항 섞기
+def shuffle_questions(user_id):
+    cur.execute(f"SELECT COUNT(*) FROM randnos WHERE userid='{user_id}'")
+    res = cur.fetchone()
+    cnt = res[0]
+
+    if cnt == 0:
+        cur.execute(f"INSERT INTO randnos (randno, userid) "
+                    f"SELECT no, {user_id} FROM questions "
+                    f"ORDER BY random()")
+        con.commit()
+
+
 st.header('3-FQ 판별 프로그램 참여')
 st.info('중·고등 학생의 경우, 같은반 학생은 \'친구\', 다른 학년 혹은 학반 학생은 \'동료\'로 생각하고 문항에 응답해 주세요.')
 
@@ -138,8 +151,14 @@ with tab2:
 
         st.markdown(f"### {st.session_state['page']} 페이지")
 
+        # 문항 랜덤하게 썪기
+        shuffle_questions(st.session_state['user_id'])
+
         # 문항 불러오기
-        cur.execute(f"SELECT * FROM questions ORDER BY no ASC LIMIT 10 OFFSET {(st.session_state['page'] - 1)*10}")
+        cur.execute(f"SELECT r.randno, q.category, q.q_no, q.question, r.no "
+                    f"FROM questions as q, randnos as r "
+                    f"WHERE q.no = r.randno AND r.userid = {st.session_state['user_id']} "
+                    f"ORDER BY r.no ASC LIMIT 10 OFFSET {(st.session_state['page'] - 1)*10}")
         rows = cur.fetchall()
         # print(rows)
 
@@ -155,7 +174,7 @@ with tab2:
 
             col1, col2 = st.columns([8, 1])
             with col1:
-                st.write(row[3])
+                st.write(f"{row[4]}. " + row[3])
                 # st.write(row[0])
                 # st.write(res[row[0]-1][0])
             with col2:
@@ -176,6 +195,15 @@ with tab2:
                 if nex:
                     st.session_state['page'] += 1
                     st.experimental_rerun()
+
+        col1, col2, col3 = st.columns([3, 1, 6])
+        with col1:
+            page = st.number_input('페이지', min_value=1, max_value=15)
+        with col2:
+            mv_btn = st.button('이동')
+            if mv_btn:
+                st.session_state['page'] = page
+                st.experimental_rerun()
 
 with tab3:
     # print('결과 조회')
