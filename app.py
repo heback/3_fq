@@ -261,7 +261,6 @@ with tab3:
         res1 = cur.fetchall()
         # print(res1)
 	
-	if res1[0][1] > 0:
 
         # 사용자 평균(구분별)
         sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
