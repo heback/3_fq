@@ -174,7 +174,7 @@ with tab2:
 
             col1, col2 = st.columns([8, 1])
             with col1:
-                st.write(f"{row[4]}. " + row[3])
+                st.write(row[3])
                 # st.write(row[0])
                 # st.write(res[row[0]-1][0])
             with col2:
