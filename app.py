@@ -260,49 +260,50 @@ with tab3:
         cur.execute(sql1)
         res1 = cur.fetchall()
         # print(res1)
-	
 
-        # 사용자 평균(구분별)
-        sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
-        cur.execute(sql2)
-        res2 = cur.fetchall()
-        # print(res2)	
+	    if res1[0][1] > 0:
 
-        categories = ['Familyship', 'Friendship', 'Fellowship']
-        index = ['평균', '본인']
-		data = [[100.0, 100.0, 100.0],
-			[np.around(res2[0][1]*100/res1[0][1], 1),
-			 np.around(res2[1][1]*100/res1[1][1], 1),
-			 np.around(res2[2][1]*100/res1[2][1], 1)]]
-		df = pd.DataFrame(data, index=index, columns=categories)
+            # 사용자 평균(구분별)
+            sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
+            cur.execute(sql2)
+            res2 = cur.fetchall()
+            # print(res2)
 
-		st.dataframe(df.style.format(subset=categories, formatter="{:.1f}"))
+            categories = ['Familyship', 'Friendship', 'Fellowship']
+            index = ['평균', '본인']
+            data = [[100.0, 100.0, 100.0],
+                [np.around(res2[0][1]*100/res1[0][1], 1),
+                 np.around(res2[1][1]*100/res1[1][1], 1),
+                 np.around(res2[2][1]*100/res1[2][1], 1)]]
+            df = pd.DataFrame(data, index=index, columns=categories)
 
-		fig = go.Figure()
+            st.dataframe(df.style.format(subset=categories, formatter="{:.1f}"))
 
-		fig.add_trace(go.Scatterpolar(
-		    r=data[0],
-		    theta=categories,
-		    fill='toself',
-		    name='평균'
-		))
-		fig.add_trace(go.Scatterpolar(
-		    r=data[1],
-		    theta=categories,
-		    fill='toself',
-		    name='본인'
-		))
+            fig = go.Figure()
 
-		fig.update_layout(
-		    polar=dict(
-			radialaxis=dict(
-			    visible=True,
-			    range=[0, 200]
-			)),
-		    showlegend=True
-		)
-		st.subheader('친화성 다이어그램')
-		st.write(fig)
+            fig.add_trace(go.Scatterpolar(
+                r=data[0],
+                theta=categories,
+                fill='toself',
+                name='평균'
+            ))
+            fig.add_trace(go.Scatterpolar(
+                r=data[1],
+                theta=categories,
+                fill='toself',
+                name='본인'
+            ))
+
+            fig.update_layout(
+                polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 200]
+                )),
+                showlegend=True
+            )
+            st.subheader('친화성 다이어그램')
+            st.write(fig)
 
         logout_btn = st.button('로그아웃')
         if logout_btn:
