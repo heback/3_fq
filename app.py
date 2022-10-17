@@ -15,7 +15,7 @@ hangul = '^[가-힣]{2,5}$'
 question_category = ['가족애', '우애', '동료애']
 
 # 데이터베이스 연결
-con = sqlite3.connect('db.db')
+con = sqlite3.connect('db.db', check_same_thread=False)
 cur = con.cursor()
 
 
@@ -256,15 +256,15 @@ with tab3:
     if 'user_id' in st.session_state.keys():
 
         # 전체 평균(구분별)
-        sql1 = f"SELECT question_category, avg(response) FROM responses GROUP BY question_category"
+        sql1 = f"SELECT question_category, sum(response) FROM responses GROUP BY question_category"
         cur.execute(sql1)
         res1 = cur.fetchall()
         # print(res1)
 
-        if res1[0][1] > 0:
+        if res1[0][1] > 0 and res1[1][1] > 0 and res1[2][1] > 0:
 
             # 사용자 평균(구분별)
-            sql2 = f"SELECT question_category, avg(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
+            sql2 = f"SELECT question_category, sum(response) FROM responses WHERE user_id='{st.session_state['user_id']}' GROUP BY question_category"
             cur.execute(sql2)
             res2 = cur.fetchall()
             # print(res2)
