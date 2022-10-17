@@ -271,7 +271,7 @@ with tab3:
 
             categories = ['Familyship', 'Friendship', 'Fellowship']
             index = ['평균', '본인']
-            data = [[100.0, 100.0, 100.0],
+            data = [[res1[0][1], res1[1][1], res1[2][1]],
                 [np.around(res2[0][1]*100/res1[0][1], 1),
                  np.around(res2[1][1]*100/res1[1][1], 1),
                  np.around(res2[2][1]*100/res1[2][1], 1)]]
